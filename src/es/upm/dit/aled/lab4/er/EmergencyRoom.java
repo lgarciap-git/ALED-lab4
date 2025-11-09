@@ -123,7 +123,8 @@ public class EmergencyRoom {
 	 * @param patient The Patient.
 	 */
 	public void admit(Patient patient) {
-		// TODO
+		patient.start();
+		System.out.println("El paciente " + patient.getNumber() + " ha iniado su protocolo");
 	}
 
 	/**
@@ -132,7 +133,19 @@ public class EmergencyRoom {
 	 * @param patient The Patient.
 	 */
 	public void waitForDischarge(Patient patient) {
-		// TODO
+		try {
+			System.out.println("Esperando a que el paciente " + patient.getNumber() + " termine su protocolo");
+			patient.join();
+			
+			System.out.println();
+		} catch (InterruptedException e){
+			e.printStackTrace();
+			
+		}
+			
+		
+		
+		
 	}
 
 }

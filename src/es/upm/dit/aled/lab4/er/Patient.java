@@ -129,18 +129,28 @@ public class Patient extends Thread {
 	 * Advances the Patient's protocol. The Patient is moved to the new Area, the
 	 * movement is animated by the GUI and the index is increased by one.
 	 */
-	private void advanceProtocol() {
-		// TODO
-	}
+	private void advanceProtocol() { 
+		Transfer transfer = protocol.get(indexProtocol); 
+		indexProtocol++; 
+		EmergencyRoomGUI gui = EmergencyRoomGUI.getInstance(); 
+		gui.animateTransfer(this, transfer); 
+		
+		System.out.println("El paciente " + number + " se desplaza desde " + location + " hacia " + transfer.getTo()); 
+		this.location = transfer.getTo(); }
 
 	/**
 	 * Simulates the treatment of the Patient at its current location. Therefore,
 	 * the Patient must spend at this method the amount of time specified in such
 	 * Area.
 	 */
-	private void attendedAtLocation() {
-		// TODO
-	}
+	private void attendedAtLocation() { 
+		try { 
+			System.out.println("El paciente " + number + " está siendo atendido en " + location); 
+			sleep(location.getTime()); 
+			
+		} catch(InterruptedException e) { 
+			e.printStackTrace(); 
+			Thread.currentThread().interrupt(); } }
 
 	/**
 	 * Executes the Patient's behavior. It follows their protocol by being attended
@@ -149,7 +159,15 @@ public class Patient extends Thread {
 	 */
 	@Override
 	public void run() {
-		// TODO
+		
+		while(indexProtocol < protocol.size()) { //< y no <= !!!!! índices van de 0 a size() - 1. 
+		
+			this.attendedAtLocation(); 
+			this.advanceProtocol(); 
+		} 
+		System.out.println("El paciente " + number + " ya no tiene más tranferencias pendientes, por lo que se elimina de la GUI"); 
+		EmergencyRoomGUI.getInstance().removePatient(this);
 	}
+	
 
 }

@@ -101,22 +101,82 @@ public class FASTAReaderThreads {
 	}
 
 	/**
-	 * Performs a linear search to look for the provided pattern in the data array.
-	 * To do this, it creates a thread pool with as many threads as cores has the
-	 * computer this code is running on. Each of these threads will perform a linear
-	 * search on the same byte[] (content), but only in a space 1/(number of cores)
-	 * the size of the genome, so the work is split equally between all threads.
-	 * When all threads have finished, it aggregates the results. Returns a List of
-	 * Integers that point to the initial positions of all the occurrences of the
-	 * pattern in the data.
+	 * Realiza una búsqueda lineal para encontrar el patrón proporcionado en el array de datos.
+	 * Para ello, crea un pool de hilos con tantos hilos como núcleos tenga el
+	 * ordenador en el que se está ejecutando este código. Cada uno de estos hilos
+	 * realizará una búsqueda lineal en el mismo byte[] (content), pero solo en un espacio
+	 * de tamaño 1/(número de núcleos) del genoma, de modo que el trabajo se divide
+	 * equitativamente entre todos los hilos.
+	 * Cuando todos los hilos hayan terminado, agrega los resultados. Devuelve una lista de
+	 * enteros que apuntan a las posiciones iniciales de todas las apariciones del
+	 * patrón en los datos.
 	 * 
-	 * @param pattern The pattern to be found.
-	 * @return All the positions of the first character of every occurrence of the
-	 *         pattern in the data.
+	 * @param pattern El patrón que se desea encontrar.
+	 * @return Todas las posiciones del primer carácter de cada aparición del
+	 *         patrón en los datos.
 	 */
-	public List<Integer> search(byte[] pattern) {
-		// TODO
-		return null;
+	public List<Integer> search(byte[] pattern) { //busco ese pattern
+		
+		List<Integer> listaFinal = new ArrayList<Integer>(); //posiciones de dodne coincida la primera base del genoma para cada paattern que encuentre
+		
+		try {
+			//Numero de cores que tiene mi ordenador
+			int cores = Runtime.getRuntime().availableProcessors();
+			System.out.println("Se usan " + cores + " cores");
+			
+			//Creo un executor --> jefe tareas: le mando las tareas a repartir, en vez de crear tantos threads como tareas
+			ExecutorService executor = Executors.newFixedThreadPool(cores);
+			
+			/*esta listaFutures tiene "Future<List<Integer>>" --> cada cosa dentro de eso es un futuro;
+			 * contiene una lista con las posiciones donde hay coincidencia--> para obtener cada lista
+			 * es con: List<Integer> 
+			 */
+			List<Future<List<Integer>>> listaFutures = new ArrayList<>(); //fuera el for para guardarlos sin qu se reinicie en cada iteración
+			
+			int tamanoSegmento = content.length / cores;
+			//Calculo los límites de cada segmento en el que trabaja cada core cada i en el for siguiente
+			int lo = 0;
+			int hi = tamanoSegmento;
+			
+			
+			//cada i representa la tarea de cada core
+			for(int i = 0; i < cores ; i++) {
+				
+				System.out.println("Creando tarea para core " + i + " con rango " + lo + " - " + hi);
+
+				//Creo la tarea
+				FASTASearchCallable tarea = new FASTASearchCallable(this, lo, hi, pattern);
+				Future<List<Integer>> f = executor.submit(tarea); // aquí hay una tarea por core
+				listaFutures.add(f);
+				
+				
+				//Actualizo límites para el segmento siguiente
+				lo += tamanoSegmento;
+				hi += tamanoSegmento;
+				
+		}
+			
+			//Con este for, recorro listaFutures y hago que dejen de ser "futuros(promesas)" para que sean realidades --> .get()
+			int indiceCore = 0; // contador fuera del for-each
+
+			for (Future<List<Integer>> ff : listaFutures) {
+			    List<Integer> real = ff.get();
+			    System.out.println("La tarea del core " + indiceCore + " ha terminado, encontrando " + real.size() + " coincidencias");
+			    listaFinal.addAll(real);
+			    indiceCore++; // incrementa para el siguiente future
+			}
+			
+			executor.shutdown();
+			System.out.println("Búsqueda completa. Total coincidencias: " + listaFinal.size());
+
+			
+		} catch (Exception e) {
+			System.out.println("Ha habido una interrupción " + e.getMessage());
+		}
+		
+			
+		return listaFinal;
+		
 	}
 
 	public static void main(String[] args) {

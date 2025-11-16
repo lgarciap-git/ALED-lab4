@@ -15,7 +15,7 @@ import java.util.concurrent.Callable;
 public class FASTASearchCallable implements Callable<List<Integer>> {
 
 	private FASTAReaderThreads reader;
-	private int lo;
+	private int lo;			//[lo, hi) delimitan dónde buscar en vez de buscar en todo el pattern
 	private int hi;
 	private byte[] pattern;
 
@@ -31,7 +31,10 @@ public class FASTASearchCallable implements Callable<List<Integer>> {
 	 * @param pattern The pattern to be found.
 	 */
 	public FASTASearchCallable(FASTAReaderThreads reader, int lo, int hi, byte[] pattern) {
-		// TODO
+		this.reader = reader;
+		this.lo = lo;
+		this.hi = hi;
+		this.pattern = pattern;
 	}
 
 	/**
@@ -44,8 +47,25 @@ public class FASTASearchCallable implements Callable<List<Integer>> {
 	 */
 	@Override
 	public List<Integer> call() throws Exception {
-		// TODO
-		return null;
+		List<Integer> pos = new ArrayList<Integer>();
+		
+		//empieza y acaba en el intervalo marcado por lo-hi
+		for(int i = lo; i < hi; i++) {
+			
+			try {
+				if(compare(pattern, i)) {
+					pos.add(i);
+				}
+				
+			} catch (FASTAException e) {
+				
+				e.printStackTrace(); 
+				break;
+			}
+						
+		}
+		 
+		return pos;
 	}
 
 	/*
